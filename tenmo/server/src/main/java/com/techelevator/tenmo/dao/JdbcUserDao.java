@@ -33,16 +33,17 @@ public class JdbcUserDao implements UserDao {
     }
 
     @Override
-    public List<User> findAll() {
+    public List<User> findAll(int userId) {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT user_id, username, password_hash FROM tenmo_user;";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+        String sql = "SELECT user_id, username, password_hash FROM tenmo_user WHERE user_id != ?;";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId);
         while(results.next()) {
             User user = mapRowToUser(results);
             users.add(user);
         }
         return users;
     }
+
 
     @Override
     public User findByUsername(String username) throws UsernameNotFoundException {
@@ -68,6 +69,12 @@ public class JdbcUserDao implements UserDao {
         }
 
         // TODO: Create the account record with initial balance
+        sql = "INSERT INTO account (user_id, balance) VALUES (?, ?) ";
+        try {
+            jdbcTemplate.update(sql, newUserId, new BigDecimal("1000"));
+        } catch (DataAccessException e) {
+            return false;
+        }
 
         return true;
     }
